@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "iomanip": "cpp",
+        "dbg_func": "cpp"
+    }
+}
