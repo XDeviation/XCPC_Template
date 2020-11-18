@@ -1,19 +1,22 @@
 #include <bits/stdc++.h>
+#include <dbg_func>
 using namespace std;
 const int maxn = 1e6 + 6;
-
+vector<pair<int, int>> G[maxn], R[maxn];
 namespace AC {
 const int len = 2; //字符集个数
 int tr[maxn][len], tot;
 int e[maxn], fail[maxn];
 int vis[maxn], ins[maxn];
-int deg[maxn], nxt[maxn], dp[maxn];
+int deg[maxn], ord[maxn], dp[maxn];
+int mxd[maxn];
 char oi[maxn];
-queue<int> tp;
+vector<int> pi;
 void insert(string s) {
     int u = 0;
     for (int i = 0; i < s.length(); i++) {
         if (!tr[u][s[i] - '0']) tr[u][s[i] - '0'] = ++tot;
+
         oi[tot] = s[i];
         u = tr[u][s[i] - '0'];
     }
@@ -21,8 +24,8 @@ void insert(string s) {
     e[u]++;
     // dbg(e);
 }
-queue<int> q;
 void build() {
+    queue<int> q;
     for (int i = 0; i < len; i++)
         if (tr[0][i]) q.push(tr[0][i]);
     while (q.size()) {
@@ -37,105 +40,105 @@ void build() {
             // dbg(e);
         }
     }
+    // if (!tr[0][0] || !tr[0][1]) {
+    //     puts("-1");
+    //     exit(0);
+    // }
+    // dbg(e);
 }
-
 void dfs(int now) {
-    if (ins[now]) {
-        cout << "-1";
-        exit(0);
+    vis[now] = 1;
+    pi.push_back(now);
+    for (int i = 0; i < len; i++) {
+        int v = tr[now][i];
+        if (!vis[v] && !e[v]) dfs(v);
     }
-    if (vis[now] || e[now]) return;
-    vis[now] = ins[now] = 1;
-    for (int i = 0; i < len; i++)
-        if (tr[now][i]) {
-            deg[tr[now][i]]++;
-            // dbg(now, deg, i, tr[now][i]);
-            dfs(tr[now][i]);
-        }
-    ins[now] = 0;
 }
 
-void bfs() {
-    for (int i = 0; i <= tot; i++)
-        if (!deg[i] && !e[i]) tp.push(i);
-    while (!tp.empty()) {
-        // dbg(tp);
-        int now = tp.front();
-        tp.pop();
+int topo() {
+    tot = 0;
+    for (auto u : pi) {
         for (int i = 0; i < len; i++) {
-            int nxtp = tr[now][i];
-            if (nxtp && !e[nxtp]) {
-                deg[nxtp]--;
-                if (!deg[nxtp]) {
-                    tp.push(nxtp);
-                    dp[nxtp] = dp[now] + 1;
-                    nxt[nxtp] = now;
-                }
+            int v = tr[u][i];
+            if (vis[v]) {
+                G[u].push_back({i, v}), deg[v]++;
             }
         }
     }
-    // dbg(dp);
+    queue<int> q;
+    for (auto it : pi)
+        if (!deg[it]) q.push(it);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        ord[++tot] = u;
+        for (auto it : G[u]) {
+            if (--deg[it.second] == 0) q.push(it.second);
+        }
+    }
+    return tot == pi.size();
 }
-string getans() {
-    vector<int> ansli;
-    ansli.push_back(1);
-    for (int i = 2; i <= tot; i++) {
-        // dbg(i);
-        if (dp[i] > dp[ansli[0]]) {
-            ansli.clear();
-            ansli.push_back(i);
-        } else if (dp[i] == dp[ansli[0]])
-            ansli.push_back(i);
+void dfs2(int u) {
+    mxd[u] = dp[u];
+    for (auto it : R[u]) {
+        dfs2(it.second);
+        mxd[u] = max(mxd[u], mxd[it.second]);
     }
-    // dbg(ansli);
-    vector<string> ans;
-    for (auto i : ansli) {
-        stack<int> tmp;
-        int x = i;
-        tmp.push(x);
-        while (nxt[x]) {
-            x = nxt[x];
-            tmp.push(x);
-        }
-        string tmpans = "";
-        while (!tmp.empty()) {
-            // dbg(tmp.top());
-            tmpans += oi[tmp.top()];
-            tmp.pop();
-        }
-        ans.push_back(tmpans);
-    }
-    // dbg(ans);
-    sort(ans.begin(), ans.end());
-    return ans[0];
 }
-int query(string t) {
-    int u = 0, res = 0;
-    for (int i = 0; i < t.length(); i++) {
-        u = tr[u][t[i] - '0']; // 转移
-        for (int j = u; j && e[j] != -1; j = fail[j]) {
-            res += e[j], e[j] = -1;
+void print(int u) {
+    for (auto it : R[u]) {
+        if (mxd[it.second] == mxd[u]) {
+            cout << it.first;
+            print(it.second);
+            break;
         }
     }
-    return res;
+}
+void solve() {
+    for (int i = 1; i <= tot; i++) {
+        int u = ord[i];
+        for (auto it : G[u]) {
+            dp[it.second] = max(dp[it.second], dp[u] + 1);
+        }
+    }
+    int ret = 0;
+    for (int i = 1; i <= tot; i++)
+        ret = max(ret, dp[i]);
+    for (int i = 1; i <= tot; i++) {
+        int u = ord[i];
+        for (auto it : G[u]) {
+            if (dp[it.second] == dp[u] + 1) {
+                R[u].push_back(it);
+            }
+        }
+        sort(R[u].begin(), R[u].end());
+    }
+    dfs2(0);
+    print(0);
 }
 } // namespace AC
 
 // 给maxn个模式串和文本串，问有多少模式串在文本串中出现
-
+string inp[maxn];
 int main() {
     int n;
     cin >> n;
     string s;
-    for (int i = 1; i <= n; i++)
-        cin >> s, AC::insert(s);
+    for (int i = 1; i <= n; i++) {
+        cin >> s;
+        AC::insert(s);
+    }
+
     // dbg("build");
     AC::build();
     // dbg("dfs");
     AC::dfs(0);
     // dbg("bfs");
-    AC::bfs();
+    if (!AC::topo()) {
+        cout << "-1\n";
+        return 0;
+    }
     // dbg("getans");
-    cout << AC::getans();
+    AC::solve();
     return 0;
 }
