@@ -9,23 +9,25 @@ int e[maxn], fail[maxn]; // e 代表是否是结尾
 void insert(string s) {
     int u = 0;
     for (int i = 0; i < s.length(); i++) {
-        if (!tr[u][s[i] - 'a']) tr[u][s[i] - 'a'] = ++tot;
-        u = tr[u][s[i] - 'a'];
+        int &v = tr[u][s[i] - 'a'];
+        if (!v) v = ++tot;
+        u = v;
     }
     e[u]++;
 }
-queue<int> q;
 void build() {
+    queue<int> q;
     for (int i = 0; i < len; i++)
         if (tr[0][i]) q.push(tr[0][i]);
     while (q.size()) {
         int u = q.front();
         q.pop();
         for (int i = 0; i < len; i++) {
-            if (tr[u][i])
-                fail[tr[u][i]] = tr[fail[u]][i], q.push(tr[u][i]);
+            int &v = tr[u][i];
+            if (v)
+                fail[v] = tr[fail[u]][i], q.push(v);
             else
-                tr[u][i] = tr[fail[u]][i];
+                v = tr[fail[u]][i];
         }
     }
 }

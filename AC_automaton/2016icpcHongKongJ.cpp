@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include <dbg_func>
+// #include <dbg_func>
 using namespace std;
 const int maxn = 1e6 + 6;
 vector<pair<int, int>> G[maxn], R[maxn];
@@ -15,14 +15,12 @@ vector<int> pi;
 void insert(string s) {
     int u = 0;
     for (int i = 0; i < s.length(); i++) {
-        if (!tr[u][s[i] - '0']) tr[u][s[i] - '0'] = ++tot;
-
+        int &v = tr[u][s[i] - '0'];
+        if (!v) v = ++tot;
         oi[tot] = s[i];
-        u = tr[u][s[i] - '0'];
+        u = v;
     }
-    // dbg(u);
     e[u]++;
-    // dbg(e);
 }
 void build() {
     queue<int> q;
@@ -32,19 +30,13 @@ void build() {
         int u = q.front();
         q.pop();
         for (int i = 0; i < len; i++) {
-            if (tr[u][i])
-                fail[tr[u][i]] = tr[fail[u]][i],
-                e[tr[u][i]] |= e[fail[tr[u][i]]], q.push(tr[u][i]);
+            int &v = tr[u][i];
+            if (v)
+                fail[v] = tr[fail[u]][i], e[v] |= e[fail[v]], q.push(v);
             else
-                tr[u][i] = tr[fail[u]][i];
-            // dbg(e);
+                v = tr[fail[u]][i];
         }
     }
-    // if (!tr[0][0] || !tr[0][1]) {
-    //     puts("-1");
-    //     exit(0);
-    // }
-    // dbg(e);
 }
 void dfs(int now) {
     vis[now] = 1;
@@ -128,17 +120,12 @@ int main() {
         cin >> s;
         AC::insert(s);
     }
-
-    // dbg("build");
     AC::build();
-    // dbg("dfs");
     AC::dfs(0);
-    // dbg("bfs");
     if (!AC::topo()) {
         cout << "-1\n";
         return 0;
     }
-    // dbg("getans");
     AC::solve();
     return 0;
 }
