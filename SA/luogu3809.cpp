@@ -23,7 +23,7 @@ void print(register int n) {
 }
 } // namespace Write
 
-const int N = 1e5 + 20;
+const int N = 1e6 + 20;
 int ord[2 * N], sa[2 * N], rank[N], height[N], l[N], r[N], pool4[4 * N],
     *mem4 = pool4;
 char s[N], pool1[2 * N], *mem1 = pool1;
@@ -89,21 +89,20 @@ void suffix_array(int n, int m, int *s, int *sa) {
     }
     induce(n, m, s, type, sa, cnt);
 }
-
-//读入一个长度为 n 的由小写英文字母组成的字符串，
-// 请把这个字符串的所有非空后缀按字典序从小到大排序，
-// 然后按顺序输出后缀的第一个字符在原串中的位置。位置编号为 1 到 n。
-// 除此之外为了进一步证明你确实有给后缀排序的超能力，请另外输出
-// n−1 个整数分别表示排序后相邻后缀的最长公共前缀的长度。
-
 int main() {
     int n, i, j, h;
     n = fread(s, 1, N, stdin);
-    while (s[n - 1] - 97u > 25)
+    while (s[n - 1] > 122u)
         --n;
-    for (i = 0; i < n; ++i)
-        ord[i] = s[i] - 96;
-    suffix_array(n, 26, ord, sa);
+    for (i = 0; i < n; ++i) {
+        if (s[i] <= '9')
+            ord[i] = s[i] - 47;
+        else if (s[i] <= 'Z')
+            ord[i] = s[i] - 65 + 11;
+        else
+            ord[i] = s[i] - 97 + 37;
+    }
+    suffix_array(n, 26 + 26 + 10, ord, sa);
     for (i = 0; i < n; ++i)
         rank[sa[i]] = i;
     for (i = 0, h = 0; i < n; ++i) {
@@ -116,12 +115,9 @@ int main() {
             h = 0;
         if (h) --h;
     }
+    // Write::print(sa[4] + 1);
     for (i = 0; i < n; ++i) {
         Write::print(sa[i] + 1);
-        Write::putchar(" \n"[i == n - 1]);
-    }
-    for (i = 1; i < n; ++i) {
-        Write::print(height[i]);
         Write::putchar(" \n"[i == n - 1]);
     }
     Write::flush();
