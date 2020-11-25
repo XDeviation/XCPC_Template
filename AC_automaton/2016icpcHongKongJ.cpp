@@ -110,7 +110,7 @@ void solve() {
 }
 } // namespace AC
 
-// 给maxn个模式串和文本串，问有多少模式串在文本串中出现
+// 2016 ICPC 香港 K 题 trie 图上找最长链
 string inp[maxn];
 int main() {
     int n;
