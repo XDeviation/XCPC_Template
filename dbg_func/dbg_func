@@ -1,0 +1,389 @@
+/**
+ *
+ * @brief a macro that can print values and their names.(header-only)
+ * @file dbg_func
+ * @author Simon_Chen
+ * @copyright MIT License
+ * @example demo.cpp
+ * @remark github page:https://github.com/Simon-Chenzw/dbg_func
+ *
+ */
+
+#pragma once
+
+#include <deque>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <set>
+#include <stack>
+#include <string>
+#include <vector>
+
+// macro
+#define open_dbg_func
+#define dbg(...)                                                               \
+    dbg_namespace::dbg_class<decltype((__VA_ARGS__))>(                         \
+        __LINE__, std::string(#__VA_ARGS__))                                   \
+        .dbg_func(__VA_ARGS__)
+#define dbg_inter(a, b) dbg_namespace::interval<decltype(a)>(a, b)
+
+namespace dbg_namespace {
+
+// colorful output
+// Reference from https://github.com/yurablok/colored-cout
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
+#define NOMINMAX            // Fixes the conflicts with STL
+#include <Windows.h>
+#include <wincon.h>
+enum class clr : WORD {
+    reset = 0,
+    black = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED,
+    red = FOREGROUND_RED | FOREGROUND_INTENSITY,
+    green = FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+    yellow = FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY,
+    blue = FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+    magenta = FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY,
+    cyan = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+    white = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED |
+            FOREGROUND_INTENSITY,
+    on_black = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED,
+    on_red = BACKGROUND_RED /*| BACKGROUND_INTENSITY*/
+    ,
+    on_green = BACKGROUND_GREEN | BACKGROUND_INTENSITY,
+    on_yellow = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY,
+    on_blue = BACKGROUND_BLUE /*| BACKGROUND_INTENSITY*/,
+    on_magenta = BACKGROUND_BLUE | BACKGROUND_RED /*| BACKGROUND_INTENSITY*/,
+    on_cyan = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_INTENSITY,
+    on_white = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED |
+               BACKGROUND_INTENSITY,
+};
+template <typename type> type &operator<<(type &ostream, const clr color) {
+    static const WORD initial_attributes = [] {
+        CONSOLE_SCREEN_BUFFER_INFO buffer_info;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),
+                                   &buffer_info);
+        return buffer_info.wAttributes;
+    }();
+    static WORD background = initial_attributes & static_cast<WORD>(0x00F0);
+    static WORD foreground = initial_attributes & static_cast<WORD>(0x000F);
+    if (color == clr::reset) {
+        ostream.flush();
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                initial_attributes);
+    } else {
+        if (static_cast<WORD>(color) & 0x00F0)
+            background = static_cast<WORD>(color);
+        else if (static_cast<WORD>(color) & 0x000F)
+            foreground = static_cast<WORD>(color);
+        ostream.flush();
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+                                background | foreground);
+    }
+    return ostream;
+}
+#elif defined(__unix__)
+enum class clr : uint8_t {
+    reset = 0,
+    black = 30,
+    red = 31,
+    green = 32,
+    yellow = 33,
+    blue = 34,
+    magenta = 35,
+    cyan = 36,
+    white = 37,
+    on_black = 40,
+    on_red = 41,
+    on_green = 42,
+    on_yellow = 43,
+    on_blue = 44,
+    on_magenta = 45,
+    on_cyan = 46,
+    on_white = 47,
+};
+template <typename T> T &operator<<(T &ostream, const clr color) {
+    if (color == clr::reset) {
+        ostream << "\033[m";
+    } else {
+        ostream << "\033[" << static_cast<uint32_t>(color) << "m";
+    }
+    return ostream;
+}
+#else
+#pragma message("Unsupported platforms, cannot print out in color")
+enum class clr : {
+    reset,
+    black,
+    red,
+    green,
+    yellow,
+    blue,
+    magenta,
+    cyan,
+    white,
+    on_black,
+    on_red,
+    on_green,
+    on_yellow,
+    on_blue,
+    on_magenta,
+    on_cyan,
+    on_white,
+};
+template <typename type> type &operator<<(type &ostream, const clr color) {
+    return ostream;
+}
+#endif
+
+clr variable_name_color = clr::cyan;
+clr constant_character_array = clr::green;
+
+template <typename T> class interval {
+  public:
+    interval(T _l, T _r)
+        : l(_l)
+        , r(_r) {
+    }
+    T l, r;
+};
+
+#ifdef DBG_LEN
+const int max_len = DBG_LEN;
+#else
+const int max_len = 30;
+#endif
+
+//输出区间
+template <typename iter> void print_inter(iter head, iter tail);
+
+//具体变量类型的输出实现
+
+template <typename T> //通用情况
+void var_print(T a) {
+    std::cerr << a;
+}
+
+template <size_t N> //字符数组
+void var_print(char (&str)[N]) {
+    for (size_t i = 0; i < N; i++) {
+        if (i >= 2 * max_len) {
+            std::cerr << "...";
+            break;
+        }
+        std::cerr << str[i];
+    }
+}
+
+template <typename T, size_t N> //数组
+void var_print(T (&a)[N]) {
+    std::cerr << '{';
+    for (size_t i = 0; i < N; i++) {
+        if (i != 0) std::cerr << ',';
+        if (i >= 2 * max_len) {
+            std::cerr << "...";
+            break;
+        }
+        var_print(a[i]);
+    }
+    std::cerr << '}';
+}
+
+template <typename T> // interval
+void var_print(interval<T> a) {
+    std::cerr << '{';
+    print_inter(a.l, a.r);
+    std::cerr << '}';
+}
+
+template <typename T1, typename T2> // pair
+void var_print(std::pair<T1, T2> a) {
+    std::cerr << '(';
+    var_print(a.first);
+    std::cerr << ',';
+    var_print(a.second);
+    std::cerr << ')';
+}
+
+template <typename T> // vector
+void var_print(std::vector<T> a) {
+    std::cerr << '{';
+    print_inter(a.begin(), a.end());
+    std::cerr << '}';
+}
+
+template <typename T> // deque
+void var_print(std::deque<T> a) {
+    std::cerr << '{';
+    print_inter(a.begin(), a.end());
+    std::cerr << '}';
+}
+
+template <typename T> // set
+void var_print(std::set<T> a) {
+    std::cerr << '{';
+    print_inter(a.begin(), a.end());
+    std::cerr << '}';
+}
+
+template <typename T> // multiset
+void var_print(std::multiset<T> a) {
+    std::cerr << '{';
+    print_inter(a.begin(), a.end());
+    std::cerr << '}';
+}
+
+template <typename T1, typename T2> // map
+void var_print(std::map<T1, T2> a) {
+    std::cerr << '{';
+    print_inter(a.begin(), a.end());
+    std::cerr << '}';
+}
+
+template <typename T> // stack
+void var_print(std::stack<T> a) {
+    const int stack_max_len = max_len / 2;
+    std::deque<T> tmp;
+    for (int i = 0; i < stack_max_len && !a.empty(); i++) {
+        tmp.push_front(a.top());
+        a.pop();
+    }
+    std::cerr << '{';
+    if (!a.empty()) std::cerr << "..." << ',';
+    print_inter(tmp.begin(), tmp.end());
+    std::cerr << '}';
+}
+
+template <typename T> // queue
+void var_print(std::queue<T> a) {
+    const int queue_max_len = max_len / 2;
+    std::vector<T> tmp;
+    while (!a.empty()) {
+        tmp.push_back(a.front());
+        a.pop();
+    }
+    if (tmp.size() <= queue_max_len * 2 + 1) {
+        std::cerr << '{';
+        print_inter(tmp.begin(), tmp.end());
+        std::cerr << '}';
+    } else {
+        std::cerr << '{';
+        print_inter(tmp.begin(), tmp.begin() + queue_max_len);
+        std::cerr << ',' << "..." << ',';
+        print_inter(tmp.end() - queue_max_len, tmp.end());
+        std::cerr << '}';
+    }
+}
+
+template <typename T, typename vec, typename func> // priority_queue
+void var_print(std::priority_queue<T, vec, func> a) {
+    int pq_max_len = max_len / 2;
+    std::vector<T> tmp;
+    for (int i = 0; i < pq_max_len && !a.empty(); i++) {
+        tmp.push_back(a.top());
+        a.pop();
+    }
+    std::cerr << '{';
+    print_inter(tmp.begin(), tmp.end());
+    if (!a.empty()) std::cerr << ',' << "...";
+    std::cerr << '}';
+}
+
+//输出区间
+template <typename iter> void print_inter(iter head, iter tail) {
+    int cnt = max_len;
+    for (iter it = head; it != tail; it++) {
+        if (it != head) std::cerr << ',';
+        if (cnt == 0) {
+            std::cerr << "...";
+            break;
+        }
+        var_print(*it);
+        cnt--;
+    }
+}
+
+template <typename ReturnType> class dbg_class {
+  public:
+    dbg_class(int _line, std::string str)
+        : printed_line(false)
+        , line(_line)
+        , name(str)
+        , it(name.begin()) {
+    }
+
+    //不定长参数 函数模板
+    template <typename T> ReturnType dbg_func(T &&a) {
+        if (!printed_line) {
+            std::cerr << '[' << line << ']';
+            printed_line = true;
+        }
+        print_with_name(a);
+        std::cerr << '\n';
+        return a;
+    }
+
+    template <typename T, typename... Args>
+    ReturnType dbg_func(T &&a, Args &&... args) {
+        if (!printed_line) {
+            std::cerr << '[' << line << ']';
+            printed_line = true;
+        }
+        print_with_name(a);
+        return dbg_func(args...);
+    }
+
+  private:
+    //输出名字
+    void varname_print() {
+        std::cerr << variable_name_color;
+        // 下列计数是为了支持参数名混有逗号的情况
+        int Parentheses_cnt = 0; // 括号计数
+        while (it != name.end() && !(*it == ',' && Parentheses_cnt == 0)) {
+            if (*it == '(') Parentheses_cnt++;
+            if (*it == ')') Parentheses_cnt--;
+            if (*it != ' ') std::cerr << *it;
+            it++;
+        }
+        std::cerr << clr::reset;
+        if (it != name.end()) ++it;
+    }
+
+    //忽略名字
+    void varname_ignore() {
+        // 下列计数是为了支持参数名混有逗号的情况
+        int Parentheses_cnt = 0; // 括号计数
+        while (it != name.end() && !(*it == ',' && Parentheses_cnt == 0)) {
+            if (*it == '(') Parentheses_cnt++;
+            if (*it == ')') Parentheses_cnt--;
+            it++;
+        }
+        if (it != name.end()) ++it;
+    }
+
+    //输出前输出名字
+    template <typename T> void print_with_name(T &&a) {
+        std::cerr << "   ";
+        varname_print();
+        std::cerr << " = ";
+        var_print(a);
+    }
+
+    //字符数组常量不输出名字
+    template <size_t N> void print_with_name(const char (&str)[N]) {
+        std::cerr << "   ";
+        varname_ignore();
+        std::cerr << constant_character_array;
+        for (size_t i = 0; i < N; i++)
+            std::cerr << str[i];
+        std::cerr << clr::reset;
+    }
+
+    bool printed_line;
+    int line;
+    std::string name;
+    std::string::iterator it;
+};
+
+} // namespace dbg_namespace
