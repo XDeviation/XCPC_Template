@@ -5,20 +5,25 @@
 using namespace std;
 struct state {
     int len, link;
-    std::map<char, int> nxt;
+    map<char, int> nxt;
 };
 const int maxn = 1e6 + 7;
 long long ans;
 state st[maxn * 2];
-int len[maxn], siz[maxn];
+int len[maxn * 2], siz[maxn * 2];
 int sz, last;
 vector<int> leni[maxn];
 void sam_init() {
+    for (int i = 0; i < sz; i++) {
+        st[i].nxt.clear();
+        siz[i] = 0;
+    }
     st[0].len = 0;
     st[0].link = -1;
     sz = 1;
     last = 0;
 }
+
 void sam_extend(char c) {
     int cur = sz++;
     st[cur].len = st[last].len + 1;
@@ -55,15 +60,13 @@ int main() {
     for (int i = 0; i < s.length(); i++)
         sam_extend(s[i]);
     for (int i = 1; i < sz; i++) {
-        // dbg(i, siz[i], st[i].link);
         leni[st[i].len].push_back(i);
     }
     ans = 0;
-    for (int i = sz - 1; i > 0; i--) {
+    for (int i = s.length(); i > 0; i--) {
         for (auto it : leni[i]) {
-            dbg(i, it, siz[i], st[it].link, st[it].len);
             siz[st[it].link] += siz[it];
-            ans = max(ans, 1LL * siz[it] * st[it].len);
+            if (siz[it] > 1) ans = max(ans, 1LL * siz[it] * st[it].len);
         }
     }
     cout << ans;
