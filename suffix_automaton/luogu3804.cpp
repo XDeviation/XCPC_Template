@@ -1,4 +1,7 @@
 #include <bits/stdc++.h>
+#ifndef open_dbg_func
+#define dbg(args...) (args)
+#endif
 using namespace std;
 struct state {
     int len, link;
@@ -58,7 +61,7 @@ int main() {
     ans = 0;
     for (int i = sz - 1; i > 0; i--) {
         for (auto it : leni[i]) {
-            // dbg(i, it, siz[i], st[it].link, st[it].len);
+            dbg(i, it, siz[i], st[it].link, st[it].len);
             siz[st[it].link] += siz[it];
             ans = max(ans, 1LL * siz[it] * st[it].len);
         }
