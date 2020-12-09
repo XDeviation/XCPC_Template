@@ -7,14 +7,17 @@
    len[u]和start[u]表示u的父边在s中的起点和长度，
    即u的父边代表s[start[u] ... start[u]+len[u]-1]
 
+    求字符串中所有子串数量（大于2） 注意字符串从1开始！
  */
 #include <bits/stdc++.h>
 using namespace std;
+#define ll long long
 const int maxn = 1e5 + 7;
-const int inf = -1e9;
+const int inf = 1e9;
+int siz[maxn];
 struct suffixTree {
-    int link[maxn << 1], len[maxn << 1], start[maxn << 1], s[maxn << 1], n,
-        tail, now, rem, ch[maxn << 1][27];
+    int link[maxn], len[maxn], start[maxn], s[maxn], n, tail, now, rem;
+    map<int, int> ch[maxn];
     suffixTree()
         : tail(1)
         , n(0)
@@ -32,8 +35,9 @@ struct suffixTree {
         s[++n] = x;
         rem++;
         for (int last = 1; rem;) {
-            while (rem > len[ch[now][s[n - rem + 1]]])
+            while (rem > len[ch[now][s[n - rem + 1]]]) {
                 rem -= len[now = ch[now][s[n - rem + 1]]];
+            }
             int &v = ch[now][s[n - rem + 1]];
             int c = s[start[v] + rem - 1];
             if (!v || x == c) {
@@ -58,6 +62,27 @@ struct suffixTree {
                 now = link[now];
         }
     }
-};
+} sft;
+ll ans = 0;
+int dfs(int u, int depth) {
+    if (depth >= inf) return 1;
+    siz[u] = 0;
+    for (auto it : sft.ch[u]) {
+        int d = dfs(it.second, depth + sft.len[it.second]);
+        siz[u] += d;
+    }
+    if (siz[u] >= 2) ans = max(ans, (ll) siz[u] * (ll) depth);
+    return siz[u];
+}
+char s[maxn];
 int main() {
+    scanf("%s", s + 1);
+    int n = std::strlen(s + 1);
+
+    for (int i = 1; i <= n; ++i)
+        sft.extend(s[i] - 'a');
+    sft.extend(26);
+    dfs(1, 0);
+    printf("%lld", ans);
+    return 0;
 }
