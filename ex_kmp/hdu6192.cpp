@@ -24,7 +24,7 @@ unsigned int _seg(int l, int r, int k, char x) {
     return has[r] - (l - 1 >= 0 ? has[l - 1] : 0) * ex[r - l + 1] -
            (k >= l && k <= r ? ex[r - k] * s[k] - ex[r - k] * x : 0);
 };
-// 愚公移山
+// 修改字符串中一个字符，使得循环节最短（最后一个可以不取完全）
 int main() {
     int n;
     while (cin >> n >> s) {

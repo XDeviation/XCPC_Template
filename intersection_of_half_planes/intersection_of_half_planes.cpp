@@ -4,7 +4,7 @@ using namespace std;
 const double eps = 1e-6;
 const int maxn = 1e5 + 7;
 
-// tips: this tmp need each vector has intersection
+// tips: this tmp maybe need each vector has intersection
 
 bool dcmp(double a, double b) {
     return fabs(a - b) < eps;
@@ -46,104 +46,6 @@ class point
         return atan2(y, x);
     }
 } ans[maxn], tmpp[maxn];
-
-int pointcmp(const point &a, const point &b) {
-    if (a.x != b.x)
-        return (a.x < b.x);
-    else
-        return (a.y < b.y);
-}
-
-bool same_line(point x1, point x2, point x3)
-//判断点是否在线段上，所求点为x1，若改为直线则在if中直接return true
-{
-    const double esp = 1e-8;
-    if (abs((x3.y - x1.y) * (x2.x - x1.x) - (x2.y - x1.y) * (x3.x - x1.x)) <
-        esp) {
-        if (x1.x <= x2.x && x1.x >= x3.x && x1.y <= x2.y && x1.y >= x3.y)
-            return true;
-        if (x1.x >= x2.x && x1.x <= x3.x && x1.y >= x2.y && x1.y <= x3.y)
-            return true;
-        return false;
-    }
-    return false;
-}
-
-bool in_the_area(point p, point area[], int lens)
-//判断点是否在多边形area内部，area内的点逆时针排序，lens为多边形点的数量，same_line用来区分边界点算内部还是外部
-{
-    int ans = 0;
-    double x;
-    for (int i = 1; i <= lens; i++) {
-        point p1 = area[i];
-        point p2 = area[i + 1];
-        if (same_line(p, p1, p2)) return true;
-        if (p1.y == p2.y) continue;
-        if (p.y < min(p1.y, p2.y)) continue;
-        if (p.y >= max(p1.y, p2.y)) continue;
-        x = (p.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
-        if (x > p.x) ans++;
-    }
-    return (ans % 2 == 1);
-}
-
-ll multi(point p1, point p2, point p0)
-// 叉乘
-{
-    ll x1 = p1.x - p0.x;
-    ll y1 = p1.y - p0.y;
-
-    ll x2 = p2.x - p0.x;
-    ll y2 = p2.y - p0.y;
-
-    return (x1 * y2 - x2 * y1);
-}
-
-int ConvexHull(int n, point p[], point ch[])
-// 凸包，点p，输出ch，如果三点共线算凸包，那么把小于号改为小于等于号
-{
-    sort(p, p + n, pointcmp);
-    int m = 0;
-    for (int i = 0; i < n; i++) {
-        while (m > 1 && multi(ch[m - 1], p[i], ch[m - 2]) < 0)
-            m--;
-        ch[m++] = p[i];
-    }
-    int k = m;
-    for (int i = n - 2; i >= 0; i--) {
-        while (m > k && multi(ch[m - 1], p[i], ch[m - 2]) < 0)
-            m--;
-        ch[m++] = p[i];
-    }
-    if (n > 1) m--;
-    return m;
-}
-
-int cnt(int x, int y, int m) {
-    x = x % m;
-    y = y % m;
-    if (x <= y)
-        return y - x + 1;
-    else
-        return y + m - x + 1;
-}
-
-double Rotating_Caliper(int m, point ch[])
-// 旋转卡壳，i，j是俩点
-{
-    ch[m + 1] = ch[1];
-    int j = 2;
-    double ans = 0;
-    for (int i = 1; i <= m; i++) {
-        while (fabs(multi(ch[i], ch[i + 1], ch[j])) <
-               fabs(multi(ch[i], ch[i + 1], ch[j + 1]))) {
-            j++;
-            if (j > m) j = 1;
-        }
-        ans = max(ans, (ch[i] - ch[j]).len());
-    }
-    return ans;
-}
 
 double cross(point a, point b)
 //求向量外积
@@ -232,39 +134,6 @@ bool SI(line *li, int n, point *ret, int &m, line *ql, point *qp)
         ret[++m] = qp[i];
     return true;
 }
-
-struct Point
-// 三维
-{
-    double x, y, z;
-    void read() {
-        scanf("%lf%lf%lf", &x, &y, &z);
-    }
-    Point operator+(const Point &p) const {
-        return {x + p.x, y + p.y, z + p.z};
-    }
-    Point operator-(const Point &p) const {
-        return {x - p.x, y - p.y, z - p.z};
-    }
-    Point operator*(double p) const {
-        return {x * p, y * p, z * p};
-    }
-    Point operator/(double p) const {
-        return {x / p, y / p, z / p};
-    }
-    Point operator*(const Point &p) const {
-        return {y * p.z - z * p.y, -x * p.z + z * p.x, x * p.y - y * p.x};
-    }
-    double operator^(const Point &p) const {
-        return x * p.x + y * p.y + z * p.z;
-    }
-    double len() {
-        return sqrt(x * x + y * y + z * z);
-    }
-    double dis(const Point &p) const {
-        return ((*this) - p).len();
-    }
-};
 
 point a[maxn], b[maxn];
 
