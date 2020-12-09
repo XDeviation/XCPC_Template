@@ -77,6 +77,8 @@ void query(int l, int r, int x) {
         if (distr < ans) query(mid + 1, r, x);
     }
 }
+// 平面最近点对 给定平面上的 $n$ 个点 $(x_i,y_i)$
+// 找出平面上最近两个点对之间的欧几里得距离
 int main() {
     scanf("%d", &n);
     for (int i = 1; i <= n; i++)
