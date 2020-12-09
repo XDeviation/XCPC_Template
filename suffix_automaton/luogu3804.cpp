@@ -8,7 +8,7 @@ struct state {
     std::map<char, int> nxt;
 };
 const int maxn = 1e6 + 7;
-long long int ans;
+long long ans;
 state st[maxn * 2];
 int len[maxn], siz[maxn];
 int sz, last;
