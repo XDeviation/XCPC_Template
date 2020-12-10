@@ -49,6 +49,9 @@ ll solve() {
 }
 } // namespace pam
 char s[maxn];
+// 定义 $s$ 的一个子串的存在值为这个子串在 $s$
+// 中出现的次数乘以这个子串的长度。对于给定的字符串 $s$
+// ，求所有回文子串中的最大存在值。
 int main() {
     pam::clear();
     scanf("%s", s + 1);
