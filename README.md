@@ -10,8 +10,10 @@
 - ex_kmp 扩展KMP（Z函数）
 - Gaussian_elimination 高斯消元
 - intersection_of_half_planes 半平面交
+- inverse 反演
 - K-D_tree K-D树
 - LCS 小常数的最长公共子序列
+- LGV LGV引理
 - manacher 马拉车
 - minimum_ball_coverage 最小球覆盖
 - mo_algorithm 莫队
