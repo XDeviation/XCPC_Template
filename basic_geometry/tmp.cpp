@@ -209,6 +209,7 @@ struct line
 // 线
 {
     point s, t;
+    double a, b, c;
     double ang;
     void getline(point a, point b) {
         s = a, t = b;
@@ -216,8 +217,16 @@ struct line
     }
     line() {
     }
-    line(point a, point b) {
-        this->s = a, this->t = b, this->ang = (a - b).angle();
+    line(point x, point y) {
+        this->s = x, this->t = y, this->ang = (x - y).angle();
+        if (fabs(x.x - y.x) < eps) {
+            a = 1, c = -x.x, b = 0;
+        } else if (fabs(x.y - y.y) < eps) {
+            a = 0, b = 1, c = -x.y;
+        } else {
+            a = x.y - y.y, b = y.x - x.x,
+            c = (x.x - y.x) * y.y - (x.y - y.y) * y.x;
+        }
     }
 } li[maxn], tmpl[maxn];
 
