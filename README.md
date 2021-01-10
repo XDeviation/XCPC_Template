@@ -5,6 +5,7 @@
 
 - 3D_convex 三维凸包 
 - AC_automaton AC自动机
+- basic_geometry 基础的计算几何板子
 - binary_indexed_tree pb_ds库的红黑树
 - dbg_func 简易的程序调试用函数
 - ex_kmp 扩展KMP（Z函数）
