@@ -3167,7 +3167,7 @@
     20	}
  
 ```
- 
+
 ```cpp
 //./intersection_of_half_planes/intersection_of_half_planes.cpp
      1	#include <bits/stdc++.h>
