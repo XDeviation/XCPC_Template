@@ -3,9 +3,14 @@ using namespace std;
 #define ll long long
 const double eps = 1e-6;
 const int maxn = 1e5 + 7;
+const double pi = acos(-1);
 #define sqr(x) ((x) * (x))
 bool dcmp(double a, double b) {
     return fabs(a - b) < eps;
+}
+int dcmp_plus(double x) {
+    if (fabs(x) < eps) return 0;
+    return x > 0 ? 1 : -1;
 }
 
 class point
@@ -19,6 +24,9 @@ class point
     void print() {
         cout << x << y;
     }
+    point(double _x = 0, double _y = 0) {
+        x = _x, y = _y;
+    };
     point operator+(const point &p) const {
         return {x + p.x, y + p.y};
     }
@@ -30,6 +38,9 @@ class point
     }
     point operator/(double p) const {
         return {x / p, y / p};
+    }
+    bool operator<(const point &b) const {
+        return x < b.x || (x == b.x && y < b.y);
     }
     double operator*(const point &p) const {
         return x * p.x + y * p.y;
@@ -43,7 +54,85 @@ class point
     double angle() {
         return atan2(y, x);
     }
-} ans[maxn], tmpp[maxn];
+    double dot(const point &b) const {
+        return x * b.x + y * b.y;
+    }
+    double cross(const point &b, const point &c) const {
+        return (b.x - x) * (c.y - y) - (c.x - x) * (b.y - y);
+    }
+    bool in_the_same_line(const point &b, const point &c) const { //三点共线
+        return !dcmp_plus(this->cross(b, c));
+    }
+    bool OnSeg(const point &b, const point &c) const { //点在线段上，包括端点
+        return in_the_same_line(b, c) && (*this - c).dot(*this - b) < eps;
+    }
+};
+
+double point_sqr(const point &p) {
+    return p.dot(p);
+}
+
+point line_cross(const point &a, const point &b, const point &c,
+                 const point &d) {
+    double u = a.cross(b, c), v = b.cross(a, d);
+    return point((c.x * v + d.x * u) / (u + v), (c.y * v + d.y * u) / (u + v));
+}
+
+double line_cross_circle(const point &a, const point &b, const point &r,
+                         double R, point &p1, point &p2) {
+    point fp = line_cross(r, point(r.x + a.y - b.y, r.y + b.x - a.x), a, b);
+    double rtol = r.dis(fp);
+    double rtos = fp.OnSeg(a, b) ? rtol : min(r.dis(a), r.dis(b));
+    double atob = a.dis(b);
+    double fptoe = sqrt(R * R - rtol * rtol) / atob;
+    if (rtos > R - eps) return rtos;
+    p1 = fp + (a - b) * fptoe;
+    p2 = fp + (b - a) * fptoe;
+    return rtos;
+}
+
+double sector_area(const point &r, const point &a, const point &b, double R)
+//不大于180度扇形面积，r->a->b逆时针
+{
+    double A2 = point_sqr(r - a), B2 = point_sqr(r - b), C2 = point_sqr(a - b);
+    return R * R * acos((A2 + B2 - C2) * 0.5 / sqrt(A2) / sqrt(B2)) * 0.5;
+}
+
+double TACIA(const point &r, const point &a, const point &b, double R) {
+    double adis = r.dis(a), bdis = r.dis(b);
+    if (adis < R + eps && bdis < R + eps) return r.cross(a, b) * 0.5;
+    point ta, tb;
+    if (r.in_the_same_line(a, b)) return 0.0;
+    double rtos = line_cross_circle(a, b, r, R, ta, tb);
+    if (rtos > R - eps) return sector_area(r, a, b, R);
+    if (adis < R + eps) return r.cross(a, tb) * 0.5 + sector_area(r, tb, b, R);
+    if (bdis < R + eps) return r.cross(ta, b) * 0.5 + sector_area(r, a, ta, R);
+    return r.cross(ta, tb) * 0.5 + sector_area(r, tb, b, R) +
+           sector_area(r, a, ta, R);
+}
+
+double SPICA(int n, point r, double R, point p[])
+// 多边形与圆面积交
+// n：p数组长度，r：圆心，R：半径，p：多边形点，顺时针或逆时针均可 <-
+// 貌似，但题是顺时针给的，不行就全改顺时针
+{
+    int i;
+    double ret = 0, if_clock_t;
+    for (i = 0; i < n; ++i) {
+        if_clock_t = dcmp_plus(r.cross(p[i], p[(i + 1) % n]));
+        if (if_clock_t < 0)
+            ret -= TACIA(r, p[(i + 1) % n], p[i], R);
+        else
+            ret += TACIA(r, p[i], p[(i + 1) % n], R);
+    }
+    return fabs(ret);
+}
+
+double cross(point a, point b)
+//求向量外积
+{
+    return a.x * b.y - a.y * b.x;
+}
 
 int pointcmp(const point &a, const point &b) {
     if (a.x != b.x)
@@ -143,12 +232,6 @@ double Rotating_Caliper(int m, point ch[])
     return ans;
 }
 
-double cross(point a, point b)
-//求向量外积
-{
-    return a.x * b.y - a.y * b.x;
-}
-
 double area(point s[], int n)
 //求凸多边形面积
 {
@@ -228,7 +311,10 @@ struct line
             c = (x.x - y.x) * y.y - (x.y - y.y) * y.x;
         }
     }
-} li[maxn], tmpl[maxn];
+    bool operator<(const line &l) const {
+        return ang < l.ang;
+    }
+};
 
 point intersection(line a, line b)
 // 交点
@@ -256,11 +342,10 @@ bool linecmp(line a, line b)
                               : a.ang < b.ang;
 }
 
-int l, r;
-
 bool SI(line *li, int n, point *ret, int &m, line *ql, point *qp)
 // 半平面交，li是向量集合，n是数量，ret是答案，ql和qp是临时的，求的是左侧的半平面交
 {
+    int l, r;
     sort(li + 1, li + 1 + n, linecmp);
     ql[l = r = 1] = li[1];
     for (int i = 2; i <= n; i++)
@@ -319,8 +404,6 @@ struct Point
         return ((*this) - p).len();
     }
 };
-
-point a[maxn], b[maxn];
 
 int main() {
     return 0;
